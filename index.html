@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html>	
+<head>
+    <meta charset = "utf-8">
+    <title>Animation</title>
+</head>
+<body>
+    <div align = "center">
+        <canvas width = "800px" height = "600px" style = "border: 1px solid black"></canvas>
+    </div>
+    <style>
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            border: 0;
+            padding: 0;
+            clip: rect(0 0 0 0);
+            overflow: hidden;
+        }
+    </style>
+    <img id="sun" src="img/sun.png" class="visually-hidden">
+    <img id="moon" src="img/moon.png" class="visually-hidden">
+    <script src="js/script.js"></script>
+</body>
+</html>
