@@ -1,52 +1,33 @@
 let ctx = document.querySelector("canvas").getContext("2d"); //Получаем контекст
 
-// Ночь
-let dark = {
+// Ширина и высота экрана
+const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
 
-    // RGB параметры тёмного цвета
-    r: 0,
-    g: 33,
-    b: 55,
+// Ширина и высота холста
+let cw = 800;
+let ch = 600;
 
-    // Прозрачность
-    alpha: 0,
+// Скорость движения
+let dx = 100;
+let dt = 1000;
 
-    // Градусы захождения солнца
-    dw: 35
-};
-
-// Радиус орбиты планет
-let r = 300;
-
-// Скорость изменения градуса
-let dw = 180;
-let dt = 4000;
-
-// Центр орбиты
-let c = {
-    x: 400,
-    y: 600
-};
-
-// Солнце
-let sun = {
-    img: document.querySelector('#sun'),
+// Машинка
+let car = {
+    imgBackward: document.querySelector('#car'),
+    imgForward: document.querySelector('#car-mirror'),
     x: 0,
-    y: 0,
-
-    // Параметр (градусная мера)
-    w: 180
+    y: 200,
+    w: vw * 0.3,
+    h: vw * 0.3,
+    dir: 1
 };
 
-// Луна
-let moon = {
-    img: document.querySelector('#moon'),
-    x: 0,
-    y: 0,
-
-    // Параметр (градусная мера)
-    w: 0
-};
+// Кнопка смены направления
+let btn = document.querySelector('.change');
+btn.addEventListener('click', () => {
+    car.dir *= -1;
+});
 
 let last = Date.now();
 function play(){
@@ -59,38 +40,22 @@ function play(){
 }
 
 function update(delta) {
-    // Обновление позиции солнца
-    sun.w += dw * delta;
-    sun.w %= 360;
-    sun.x = c.x + r * Math.cos(sun.w * Math.PI / 180);
-    sun.y = c.y + r * Math.sin(sun.w * Math.PI / 180);
-
-    // Обновление позиции луны
-    moon.w += dw * delta;
-    moon.w %= 360;
-    moon.x = c.x + r * Math.cos(moon.w * Math.PI / 180);
-    moon.y = c.y + r * Math.sin(moon.w * Math.PI / 180);
-
-    if (sun.w >= 360 - dark.dw) {
-        // Плавный закат
-        dark.alpha = 1 - 1 / dark.dw * (360 - sun.w);
-    }
-    else if (sun.w >= 180) {
-        // Плавный восход
-        dark.alpha = 1 - 1 / dark.dw * (sun.w - 180);
-    }
+    // Обновление позиции
+    car.x += car.dir * dx * delta;
+    car.x = Math.min(car.x, cw - car.w);
+    car.x = Math.max(car.x, 0);
 }
 
 function render() {
-    ctx.clearRect(0, 0, 800, 600);
+    ctx.clearRect(0, 0, cw, ch);
 
-    // Фон
-    ctx.fillStyle = `rgba(${dark.r}, ${dark.g}, ${dark.b}, ${dark.alpha})`;
-    ctx.fillRect(0, 0, 800, 600);
-
-    // Солнце и луна
-    ctx.drawImage(sun.img, sun.x, sun.y);
-    ctx.drawImage(moon.img, moon.x, moon.y);
+    // Машинка
+    if (car.dir == 1) {
+        ctx.drawImage(car.imgForward, car.x, car.y, car.w, car.h);
+    }
+    else {
+        ctx.drawImage(car.imgBackward, car.x, car.y, car.w, car.h);
+    }
 }
 
 var requestAnimFrame = (function () {
