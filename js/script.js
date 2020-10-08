@@ -1,74 +1,79 @@
-let ctx = document.querySelector("canvas").getContext("2d"); //Получаем контекст
 
 // Ширина и высота экрана
 const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
 const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
 
-// Ширина и высота холста
-let cw = 800;
-let ch = 600;
+// Инициализация канваса
+let canvas = document.querySelector(".canvas");
+let ctx = canvas.getContext("2d");
 
-// Скорость движения
-let dx = 100;
-let dt = 1000;
+// Растягиваем на весь экран
+canvas.width = vw;
+canvas.height = vh;
 
-// Машинка
-let car = {
-    imgBackward: document.querySelector('#car'),
-    imgForward: document.querySelector('#car-mirror'),
-    x: 0,
-    y: 200,
-    w: vw * 0.3,
-    h: vw * 0.3,
-    dir: 1
+// Рисует 1 пиксель на холсте
+let plot = (x, y, color) => {
+    if (x >= 0 && y >= 0 && x <= canvas.width && y <= canvas.height) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, 1, 1); 
+    }
 };
 
-// Кнопка смены направления
-let btn = document.querySelector('.change');
-btn.addEventListener('click', () => {
-    car.dir *= -1;
-});
-
-let last = Date.now();
-function play(){
-	let now = Date.now();
-	let delta = (now - last) / dt;
-	update(delta);
-	render();
-	requestAnimFrame(play);
-	last = now;
+// Рисует пиксель в первой четверти и остальные по симметрии
+let drawPoints = (x0, y0, x, y, color) => {
+    plot(x0 + x, y0 + y, color);
+    plot(x0 + x, y0 - y, color);
+    plot(x0 - x, y0 - y, color);
+    plot(x0 - x, y0 + y, color);
 }
 
-function update(delta) {
-    // Обновление позиции
-    car.x += car.dir * dx * delta;
-    car.x = Math.min(car.x, cw - car.w);
-    car.x = Math.max(car.x, 0);
-}
+// Рисует эллипс по алгоритму Брезенхема
+let drawEllipse = (x0, y0, a, b, color) => {
+    let x = 0; 
+    let y = b; 
+    let aa = a * a; 
+    let bb = b * b; 
 
-function render() {
-    ctx.clearRect(0, 0, cw, ch);
+    // точка (x+1, y-1/2)
+    let delta = 4 * bb * ((x + 1) * (x + 1)) + aa * ((2 * y - 1) * (2 * y - 1)) - 4 * aa * bb;
 
-    // Машинка
-    if (car.dir == 1) {
-        ctx.drawImage(car.imgForward, car.x, car.y, car.w, car.h);
-    }
-    else {
-        ctx.drawImage(car.imgBackward, car.x, car.y, car.w, car.h);
-    }
-}
+    // Первая часть дуги
+    while (aa * (2 * y - 1) > 2 * bb * (x + 1)) {
+        drawPoints(x0, y0, x, y, color);
 
-var requestAnimFrame = (function () {
-    return (
-        window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function (callback) {
-            window.setTimeout(callback, 50);
+        if (delta < 0) {
+            // Переход по горизонтали
+            x++;
+            delta += 4 * bb * (2 * x + 3);
         }
-    );
-})();
+        else {
+            // Переход по диагонали
+            x++;
+            delta = delta - 8 * aa * (y - 1) + 4 * bb * (2 * x + 3);
+            y--;
+        }
+    }
 
-play();
+    // точка (x+1/2, y-1)
+    delta = bb * ((2 * x + 1) * (2 * x + 1)) + 4 * aa * ((y + 1) * (y + 1)) - 4 * aa * bb; 
+
+    // Вторая часть дуги, если не выполняется условие первого цикла, значит выполняется a^2(2y - 1) <= 2b^2(x + 1)
+    while (y + 1 != 0) {
+        drawPoints(x0, y0, x, y, color);
+
+        if (delta < 0) {
+            // Переход по вертикали
+            y--;
+            delta += 4 * aa * (2 * y + 3);
+        }
+        else {
+            // Переход по диагонали
+            y--;
+            delta = delta - 8 * bb * (x + 1) + 4 * aa * (2 * y + 3);
+            x++;
+        }
+    }
+}
+
+// Рисуем эллипс по середине холста
+drawEllipse(vw / 2, vh / 2, 200, 100, 'crimson');
